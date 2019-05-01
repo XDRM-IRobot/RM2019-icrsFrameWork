@@ -1,4 +1,5 @@
 #include "kalman_node.h"
+// #include "../../../serial/include/car_info.h"
     // int filter_cnt = 0;
     int loop_cnt   = 0;
     cv::RotatedRect hisRect;
@@ -64,25 +65,31 @@ using namespace cv;
 
   cv::RotatedRect kalman_node::KF(cv::RotatedRect  armor_rect)
   {
+    // ROS_ERROR("kalman: pass_pitch_angle: %f", pass_pitch_angle);
+    // ROS_ERROR("kalman: pass_yaw_angle: %f", pass_yaw_angle);
+    // ROS_ERROR("kalman: pass_pitch_rate: %f", pass_pitch_rate);
+    // ROS_ERROR("kalman: pass_yaw_rate: %f", pass_yaw_rate);
+
+      // kalman_node::init_K();
     //armor_rect = armor_rect; //init
      //handwrite filter
-      vx_gimbal = gimbal_info_.yaw_rate; //gimbal_info_.yaw_rate;
-      vy_gimbal = gimbal_info_.pitch_rate;
-      y_gimbal =gimbal_info_.pitch_ecd_angle;
-      p_gimbal =gimbal_info_.yaw_ecd_angle;
+      // vx_gimbal = gimbal_info_.yaw_rate; //gimbal_info_.yaw_rate;
+      // vy_gimbal = gimbal_info_.pitch_rate;
+      // y_gimbal  = gimbal_info_.pitch_ecd_angle;
+      // p_gimbal  = gimbal_info_.yaw_ecd_angle;
       
 
-      if(y_gimbal - his_y_gimbal < 0) vx_gimbal = -vx_gimbal;
-      if(p_gimbal - his_p_gimbal < 0) vy_gimbal = -vy_gimbal;
+      // if(y_gimbal - his_y_gimbal < 0) vx_gimbal = -vx_gimbal;
+      // if(p_gimbal - his_p_gimbal < 0) vy_gimbal = -vy_gimbal;
 
 
-      his_p_gimbal = p_gimbal;
-      his_y_gimbal = y_gimbal;
+      // his_p_gimbal = p_gimbal;
+      // his_y_gimbal = y_gimbal;
 
 
       if(loop_cnt <  1 )  //might useless?
       hisRect = armor_rect;
-      if(loop_cnt > 30)
+      if(loop_cnt > 4)
       {
         loop_cnt = 0;
         max_vel_x = 0;
@@ -111,8 +118,8 @@ using namespace cv;
     setIdentity(KF.errorCovPost, Scalar::all(1));           //先验误差？
 
     //初始化运动状态
-    vel_x = -(hisRect.center.x - armor_rect.center.x)*2.4;
-    vel_y = -(hisRect.center.y - armor_rect.center.y)*0.8;
+    vel_x = -(hisRect.center.x - armor_rect.center.x)*2.4 + kalman_yaw_rate;
+    vel_y = -(hisRect.center.y - armor_rect.center.y)*0; //*0.8;  //fang fa feng
 
     state.at<float>(0) = armor_rect.center.x;   //x
     state.at<float>(1) = armor_rect.center.y;   //y
@@ -133,7 +140,7 @@ using namespace cv;
     if (his_vel_x != 0 && ((his_vel_x > 0 && vel_x < 0) || (his_vel_x < 0 &&  vel_x > 0) ) ) {
         vel_x = his_vel_x;
       }
-    if (vel_x >150) {
+    if (vel_x >120) {
         vel_x = 0;
     }
     
@@ -158,8 +165,8 @@ using namespace cv;
     // ROS_ERROR("%f", vel_x);
     KF.statePost.at<float>(0) = armor_rect.center.x;//x;
     KF.statePost.at<float>(1) = armor_rect.center.y;                    //y;
-    KF.statePost.at<float>(2) = vel_x*1;  //this number is a contrl param to control the power of predict   // + vx_gimbal;                    //vx;
-    KF.statePost.at<float>(3) = vel_y;   // + vy_gimbal;                    //vy;
+    KF.statePost.at<float>(2) = vel_x ;  //this number is a contrl param to control the power of predict   // + vx_gimbal;                    //vx;
+    KF.statePost.at<float>(3) = vel_y ;   // + vy_gimbal;                    //vy;
 
     his_vel_x = vel_x;
 
@@ -167,6 +174,7 @@ using namespace cv;
     Mat prediction = KF.predict();      //调用预测函数 将返回的先验估计值储存在prediction
     double px = prediction.at<float>(0);  //上面返回的先验预测向量中的第一个元素作为预测的角度
     double py = prediction.at<float>(1);
+
     Point predictPt = (Point2f(px,py)); //change x for miao zhun
 
     randn( measurement, Scalar::all(0), Scalar::all(KF.measurementNoiseCov.at<float>(0)));  //这里应该是考虑了误差 参生了一个随机的误差矩阵 后面要加在先验向量上

@@ -31,6 +31,7 @@ add_message_files(
   BattleField.msg
   GimbalInfo.msg
   Referee.msg
+  InfoFromCar.msg
 )
 
 add_message_files(

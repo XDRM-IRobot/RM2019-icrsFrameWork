@@ -28,6 +28,7 @@
 #include "roborts_msgs/GimbalAngle.h"
 #include "roborts_msgs/GimbalRate.h"
 #include "roborts_msgs/ArmorDetectionAction.h"
+#include "roborts_msgs/InfoFromCar.h"
 
 #include "alg_factory/algorithm_factory.h"
 #include "io/io.h"
@@ -39,10 +40,19 @@
 #include "proto/armor_detection.pb.h"
 #include "armor_detection_algorithms.h"
 
+#include "kalman_node/kalman_node.h"
+// #include "../../serial/include/car_info.h"
+#include "../../serial/include/car_info.h"
+
+// extern kalman_node *Kl = new kalman_node; // to pass gimbal data to kalman .... zan shi xie bu chu geng hao de 
+
+
+
 namespace roborts_detection {
 
 using roborts_common::NodeState;
 using roborts_common::ErrorInfo;
+// kalman_node test_Kl;
 
 class ArmorDetectionNode {
  public:
@@ -75,6 +85,36 @@ class ArmorDetectionNode {
   void ExecuteLoop();
 
   ~ArmorDetectionNode();
+  
+  // ROS
+  void ROS_Init()
+  {
+    ros_sub_carinfo_ = nh_.subscribe("car_info", 1, &ArmorDetectionNode::CarInfoCallback, this);
+  }
+
+  roborts_msgs::InfoFromCar pass_car_info;
+
+  void CarInfoCallback(roborts_msgs::InfoFromCar msg)
+  {
+    pass_car_info.pitch_angle = msg.pitch_angle;
+    pass_car_info.yaw_angle   = msg.yaw_angle;
+    pass_car_info.pitch_rate  = msg.pitch_rate;
+    pass_car_info.yaw_rate    = msg.yaw_rate;
+
+    // ROS_ERROR("armor_node: pass_pitch_angle: %f", pass_pitch_angle);
+    // ROS_ERROR("armor_node: pass_yaw_angle: %f", pass_yaw_angle);
+    // ROS_ERROR("armor_node: pass_pitch_rate: %f", pass_pitch_rate);
+    // ROS_ERROR("armor_node: pass_yaw_rate: %f", pass_yaw_rate);
+    
+    // Kl.yaw_rate = msg.yaw_rate;
+    // Kl.pitch_rate = msg.pitch_rate;
+    // ROS_ERROR("Kl.pitch_rate: %f ",  msg.pitch_rate);
+    // ROS_ERROR("Kl.yaw_rate: %f ",    msg.yaw_rate);
+
+  }
+
+  
+
  protected:
  private:
   std::shared_ptr<ArmorDetectionBase> armor_detector_;
@@ -96,6 +136,7 @@ class ArmorDetectionNode {
 
   //ROS
   ros::NodeHandle nh_;
+  ros::Subscriber ros_sub_carinfo_;
   std::shared_ptr<CVToolbox> cv_toolbox_;
   actionlib::SimpleActionServer<roborts_msgs::ArmorDetectionAction> as_;
 

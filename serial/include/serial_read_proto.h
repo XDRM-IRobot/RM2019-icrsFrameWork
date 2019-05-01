@@ -10,11 +10,22 @@
 #define _SERIAL_READ_PROTO_H_
 
 #include <ros/ros.h>
-#include <serial/car_info.h>
+// #include <serial/car_info.h>
+
+#include "roborts_msgs/ArmorDetectionAction.h"
+#include <roborts_msgs/GimbalAngle.h>
+#include "roborts_msgs/InfoFromCar.h"
+
 
 #include <stdint.h>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+
+#include "car_info.h"
+#include "LinuxSerial.hpp"
+
+
+// #include "../../roborts_detection/armor_detection/armor_detection_node.h"
 
 using namespace std;
 using namespace boost::asio;
@@ -22,88 +33,46 @@ using namespace boost::asio;
 namespace serial_mul
 {
 
-struct buffer_read 
-{
-    uint8_t  sof;
-    
-    int16_t  uwb_x;
-    int16_t  uwb_y;
-    uint16_t uwb_angle;
-
-    int16_t  angle;
-    int16_t  v_x;
-    int16_t  v_y;
-    int16_t  v_r;
-
-    int16_t  yaw;
-    int16_t  pitch;
-
-    uint8_t  end;
-
-}__attribute__((packed));
-
-
 
 class serial_read
 {
-    buffer_read data;
-    
+    unsigned char data[10];
     int     data_len;
     int16_t init_yaw;
 
 public:
-    serial::car_info info;
+    
+    roborts_msgs::InfoFromCar info;
+    
 
 public:
-    serial_read(): port_id("/dev/ttyUSB0")
-    {
-        pSerialPort = new serial_port(m_ios);
-
-        if (pSerialPort){
-            ros::param::get("serial_port",port_id);
-			if (init_port( port_id, 8 ))
-                cout << "init serial [ " << port_id << " ] success! read data... \n";
-		}
-        data_len = sizeof(data);
-
-        // uint8_t buff[data_len];
-        // read(*pSerialPort, buffer(buff));
-
-        if (data.sof == 0xDA && data.end == 0xDB) init_yaw = data.angle;
-        
-    }
+    serial_read() {}
     ~serial_read() { if(pSerialPort) delete pSerialPort; }
 
 public:
 	void read_from_serial()
     {
-        //async_read( *pSerialPort, buffer(data), 
-        //    boost::bind( &serial_read::read_callback, this, boost::asio::placeholders::error) );
-        // read(...)
+        serial.ReadData(data, 10);
+        if (data[0] == 0xDA && data[9] == 0xDB)
+        {
+            info.pitch_angle = int16_t((data[3] << 8) | (data[4]) )/10.0;   //slove it ....
+            info.yaw_angle   = int16_t((data[1] << 8) | (data[2]) )/10.0;
+            info.pitch_rate  = int16_t((data[7] << 8) | (data[8]) )/10.0;
+            info.yaw_rate    = int16_t((data[5] << 8) | (data[6]) )/10.0;
+
+            // ROS_ERROR("yaw_angle: %f", info.yaw_angle);
+            // ROS_ERROR("pitch_angle: %f", info.pitch_angle);
+            // ROS_ERROR("yaw_rate: %f", info.yaw_rate);
+            // ROS_ERROR("pitch_rate: %f", info.pitch_rate);
+
+            // pass_yaw_rate = info.pitch_rate;
+            // pass_pitch_rate = info.yaw_rate;
+            // pass_yaw_angle = info.yaw_angle;
+            // pass_pitch_angle = info.pitch_angle;
+        }
+
     }
 
-	void read_callback(const boost::system::error_code & ec )
-    {
-        if(!ec)
-        {
-            if (data.sof == 0xDA && data.end == 0xDB)
-            {
-                info.stamp = ros::Time::now();
-                info.angle = (data.angle - init_yaw) * (M_PI/180.);
-                info.v_x   = data.v_x / 1000.;
-                info.v_y   = data.v_y / 1000.;
-                info.v_r   = data.v_r * (M_PI/180.);
-
-                info.stamp = ros::Time::now();
-                info.yaw   = data.yaw;
-                info.pitch = data.pitch;
-            }
-        }
-        else
-        {
-            ; // Todo: error
-        }
-    }
 
 private:
 	bool init_port( const std::string port, const unsigned int char_size = 8)
@@ -125,6 +94,7 @@ private:
 	serial_port *pSerialPort;		// Serial port Object
 	std::string port_id;	    	// For save com name
 	boost::system::error_code ec;	// Serial_port function exception
+    CLinuxSerial serial;
 };
 
 } // namespace serial_mul

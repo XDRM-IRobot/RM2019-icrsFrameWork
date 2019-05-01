@@ -29,6 +29,7 @@ ArmorDetectionNode::ArmorDetectionNode():
     if (Init().IsOK()) {
       initialized_ = true;
       node_state_ = roborts_common::IDLE;
+      ROS_Init(); //zhan shi bu yong
     } else {
       ROS_ERROR("armor_detection_node initalized failed!");
       node_state_ = roborts_common::FAILURE;
@@ -129,7 +130,7 @@ void ArmorDetectionNode::ExecuteLoop()
     if (node_state_ == NodeState::RUNNING) 
     {
       std::vector<cv::Point3f> targets_3d;
-      ErrorInfo error_info = armor_detector_->DetectArmor(detected_enemy_, targets_3d);
+      ErrorInfo error_info = armor_detector_->DetectArmor(detected_enemy_, targets_3d, pass_car_info);   //to pass car_info
       {
         std::lock_guard<std::mutex> guard(mutex_);
         targets_3d_ = targets_3d;

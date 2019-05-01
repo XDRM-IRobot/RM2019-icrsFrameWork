@@ -65,7 +65,7 @@ class serial_write
 
 public:
     serial_write(): port_id("/dev/ttyUSB0"),
-                    enemy_detected_(false),
+                    // enemy_detected_(false),
                     lost_cnt_(0),
                     detect_cnt_(0)
                     // armor_detection_actionlib_client_("armor_detection_node_action", true)
@@ -84,14 +84,15 @@ public:
 public:
     void write_To_serial(struct Serial2CarProto s2c)  //const detect::armor_goal& vision_data
     {
-        ROS_ERROR("pitch: %f , yaw: %f", s2c.pitch_angle, s2c.yaw_angle);
+        // ROS_ERROR("pitch: %f , yaw: %f", s2c.pitch_angle, s2c.yaw_angle);
+        // ROS_ERROR("pitch: %f , yaw: %f", int16_t(s2c.pitch_angle)*100 ,int16_t(s2c.yaw_angle)*100 );
         uint8_t data[6];
-        data[0] = 0xff;
-        data[1] = uint8_t(int16_t(s2c.pitch_angle) ) ;
-        data[2] = uint8_t(int16_t(s2c.pitch_angle) >> 8 ); 
-        data[3] = uint8_t(int16_t(s2c.yaw_angle) ) ;
-        data[4] = uint8_t(int16_t(s2c.yaw_angle) >> 8);
-        data[5] = 0xfe;
+        data[0] = 0xad;
+        data[1] = uint8_t(int16_t(s2c.yaw_angle*100) ) ;
+        data[2] = uint8_t(int16_t(s2c.yaw_angle*100) >> 8 ); 
+        data[3] = uint8_t(int16_t(s2c.pitch_angle*100) ) ;
+        data[4] = uint8_t(int16_t(s2c.pitch_angle*100) >> 8);
+        data[5] = 0xda;
 
         size_t len = write( *pSerialPort, buffer( data ), ec );
         // cout << "send length: " << len << "\tbuf: " << data << "\n";
@@ -109,7 +110,7 @@ public:
 private:
 
 
-    bool enemy_detected_;
+    // bool enemy_detected_;
     int lost_cnt_;   
     int detect_cnt_;   
 

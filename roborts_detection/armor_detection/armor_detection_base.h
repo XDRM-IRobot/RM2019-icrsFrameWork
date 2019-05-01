@@ -21,6 +21,7 @@
 #include <vector>
 #include "state/error_code.h"
 #include "../util/cv_toolbox.h"
+#include "roborts_msgs/InfoFromCar.h"
 
 namespace roborts_detection {
 
@@ -32,7 +33,7 @@ class ArmorDetectionBase {
       : cv_toolbox_(cv_toolbox)
   {  };
   virtual void LoadParam() = 0;
-  virtual ErrorInfo DetectArmor(bool &detected, std::vector<cv::Point3f> &targets_3d) = 0;
+  virtual ErrorInfo DetectArmor(bool &detected, std::vector<cv::Point3f> &targets_3d, roborts_msgs::InfoFromCar &pass_car_info) = 0;
   virtual void SetThreadState(bool thread_state) = 0;
   virtual ~ArmorDetectionBase() = default;
  protected:

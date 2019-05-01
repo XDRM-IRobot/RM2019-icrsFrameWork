@@ -24,6 +24,7 @@
 
 //#include "../kalman_test/kalman.h"
 #include "../kalman_node/kalman_node.h"
+#include "../armor_detection_node.h"
 namespace roborts_detection {
 
 int showup_cnt = 0;
@@ -107,8 +108,9 @@ void ConstraintSet::LoadParam() {
   }
 }
 
-ErrorInfo ConstraintSet::DetectArmor(bool &detected, std::vector<cv::Point3f> &targets_3d) 	//main entergate
+ErrorInfo ConstraintSet::DetectArmor(bool &detected, std::vector<cv::Point3f> &targets_3d, roborts_msgs::InfoFromCar &pass_car_info) 	//main entergate
 {
+
   std::vector<cv::RotatedRect> lights;
   std::vector<ArmorInfo> armors;
 
@@ -164,7 +166,7 @@ ErrorInfo ConstraintSet::DetectArmor(bool &detected, std::vector<cv::Point3f> &t
     DetectLights(src_img_, lights);
     FilterLights(lights);
     PossibleArmors(lights, armors);
-    FilterArmors(armors);
+    FilterArmors(armors, pass_car_info);
 		
 		cv::Point3f target_3d;
 
@@ -839,7 +841,8 @@ void ConstraintSet::PossibleArmors(const std::vector<cv::RotatedRect> &lights, s
   }
 }
 
-void ConstraintSet::FilterArmors(std::vector<ArmorInfo> &armors) {
+void ConstraintSet::FilterArmors(std::vector<ArmorInfo> &armors, roborts_msgs::InfoFromCar &pass_car_info) {
+
 	std::vector<bool> is_armor(armors.size(), true);
 
 	for (int i = 0; i < armors.size(); i++) {
@@ -920,12 +923,25 @@ void ConstraintSet::FilterArmors(std::vector<ArmorInfo> &armors) {
 	
 	if(filter_rects.size())
 	{
-		kalman_node Kl;
+		kalman_node Kl;		//move to armor_detection_node.h
+		Kl.kalman_pitch_angle	= pass_car_info.pitch_angle;
+		Kl.kalman_pitch_rate	= pass_car_info.pitch_rate;
+		Kl.kalman_yaw_angle		= pass_car_info.yaw_angle;
+		Kl.kalman_yaw_rate 		= pass_car_info.yaw_rate;
+		ROS_ERROR("Kl: pass_pitch_angle: %f", Kl.kalman_pitch_angle);
+    ROS_ERROR("Kl: pass_yaw_angle:   %f", Kl.kalman_yaw_angle);
+    ROS_ERROR("Kl: pass_pitch_rate:  %f", Kl.kalman_pitch_rate);
+    ROS_ERROR("Kl: pass_yaw_rate:    %f", Kl.kalman_yaw_rate);
+    
 		//waitKey(0);
 		showup_cnt++;
 		if (showup_cnt > 3) { 	//useless?
 			// cv::RotatedRect preArmor = CKalman(filter_rects[0].rect);
 			cv::RotatedRect preArmor = Kl.KF(filter_rects[0].rect);
+
+			// cv::RotatedRect preArmor = test_Kl.KF(filter_rects[0].rect);		
+			// cv::RotatedRect preArmor = Kl->KF(filter_rects[0].rect);
+			// Kl->KF(filter_rects[0].rect);
 			// kalman_node preKl;
 			// preKl.KF(filter_rects[0].rect);
 			circle(src_img_,preArmor.center,10,cv::Scalar(0,0,255),-1);

@@ -136,7 +136,7 @@ class ConstraintSet : public ArmorDetectionBase {
    * @param translation Translation information of the armor relative to the camera.
    * @param rotation Rotation information of the armor relative to the camera.
    */
-  ErrorInfo DetectArmor(bool &detected, std::vector<cv::Point3f> &targets_3d) override;
+  ErrorInfo DetectArmor(bool &detected, std::vector<cv::Point3f> &targets_3d, roborts_msgs::InfoFromCar &pass_car_info) override;
   /**
    * @brief Detecting lights on the armors.
    * @param src Input image
@@ -158,7 +158,7 @@ class ConstraintSet : public ArmorDetectionBase {
    * @brief Filtering Detected armors by standard deviation and non-maximum suppression(nms).
    * @param armors Result armors
    */
-  void FilterArmors(std::vector<ArmorInfo> &armors);
+  void FilterArmors(std::vector<ArmorInfo> &armors, roborts_msgs::InfoFromCar &pass_car_info);
   /**
    * @brief Slecting final armor as the target armor which we will be shot.
    * @param Input armors
