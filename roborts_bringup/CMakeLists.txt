@@ -7,7 +7,6 @@ set(CMAKE_BUILD_TYPE Release)
 
 find_package(catkin REQUIRED COMPONENTS
   serial
-  roborts_common
 
   roborts_msgs
 
