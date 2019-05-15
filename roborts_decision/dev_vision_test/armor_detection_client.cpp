@@ -94,7 +94,7 @@ private:
       float yaw, pitch;
       gimbal_control_.SolveContrlAgnle(target, yaw, pitch);
       gimbal_angle_.yaw_angle   = -yaw;
-      gimbal_angle_.pitch_angle = pitch;
+      gimbal_angle_.pitch_angle = pitch ; //adjust gimbal
 
       enemy_info_pub_.publish(gimbal_angle_);
 

@@ -86,6 +86,7 @@ public:
     {
         // ROS_ERROR("pitch: %f , yaw: %f", s2c.pitch_angle, s2c.yaw_angle);
         // ROS_ERROR("pitch: %f , yaw: %f", int16_t(s2c.pitch_angle)*100 ,int16_t(s2c.yaw_angle)*100 );
+        
         uint8_t data[6];
         data[0] = 0xad;
         data[1] = uint8_t(int16_t(s2c.yaw_angle*100) ) ;

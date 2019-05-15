@@ -21,11 +21,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
-#include "car_info.h"
 #include "LinuxSerial.hpp"
-
-
-// #include "../../roborts_detection/armor_detection/armor_detection_node.h"
 
 using namespace std;
 using namespace boost::asio;

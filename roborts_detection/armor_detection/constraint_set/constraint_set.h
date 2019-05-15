@@ -34,6 +34,7 @@
 #include "proto/constraint_set.pb.h"
 #include "constraint_set.h"
 
+#include "../kalman_node/kalman_node.h"
 
 namespace roborts_detection {
 
@@ -270,6 +271,14 @@ class ConstraintSet : public ArmorDetectionBase {
   cv::Mat intrinsic_matrix_;
   //! Camera distortion Coefficient
   cv::Mat distortion_coeffs_;
+
+  //add for armor fliter
+  int state_flag;
+  int his_state_flag;
+  int state_keep_cnt;
+
+  //kalman prediction
+  kalman_node Kl;
 
   void GetTarget2d(const cv::RotatedRect & rect, const cv::Point2f& offset = cv::Point2f(0,0))
   {

@@ -71,7 +71,9 @@ void GimbalAngleCallback(const roborts_msgs::GimbalAngle::ConstPtr &msg)
     
         s2c.yaw_angle   = msg->yaw_angle ;
         s2c.pitch_angle = -(msg->pitch_angle) ;
-        if(s2c.pitch_angle > 15 || s2c.pitch_angle < -2.5)
+        if(s2c.pitch_angle > 0)
+        s2c.pitch_angle = s2c.pitch_angle +2;
+        if(s2c.pitch_angle > 12 || s2c.pitch_angle < -2.5)
         s2c.pitch_angle = PreFilter(s2c.pitch_angle);
         // ROS_ERROR("%f", s2c.pitch_angle);
     

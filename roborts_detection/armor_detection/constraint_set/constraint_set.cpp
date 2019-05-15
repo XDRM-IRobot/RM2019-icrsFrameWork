@@ -22,8 +22,6 @@
 #include "timer/timer.h"
 #include "io/io.h"
 
-//#include "../kalman_test/kalman.h"
-#include "../kalman_node/kalman_node.h"
 #include "../armor_detection_node.h"
 namespace roborts_detection {
 
@@ -167,7 +165,7 @@ ErrorInfo ConstraintSet::DetectArmor(bool &detected, std::vector<cv::Point3f> &t
     FilterLights(lights);
     PossibleArmors(lights, armors);
     FilterArmors(armors, pass_car_info);
-		
+//////////////////////////////////////////////////////////////
 		cv::Point3f target_3d;
 
     if(!armors.empty()) {
@@ -871,24 +869,44 @@ void ConstraintSet::FilterArmors(std::vector<ArmorInfo> &armors, roborts_msgs::I
 
         if (is_armor[i] == true && is_armor[j] == true)
         {
-          if (abs(armor_ratio1 - armor_ratio2) > 0.4)
+          if (abs(armor_ratio1 - armor_ratio2) > 0.3)
           {
             if(armor_ratio1 - armor_ratio2 > 0)
               is_armor[i] = false;
             else
               is_armor[j] = false;
+						// ROS_ERROR("state 1");
+
           }
-          else if (abs(abs(armors.at(i).rect.angle) - abs(armors.at(j).rect.angle)) > 15) 
+          else if (abs(abs(armors.at(i).rect.angle) - abs(armors.at(j).rect.angle)) > 10/*15*/) 
           {
             if (abs(armors.at(i).rect.angle) > abs(armors.at(j).rect.angle))
               is_armor[i] = false;
             else
               is_armor[j] = false;
+						// ROS_ERROR("state 2");
           }
-          else if (armors.at(i).rect.size.area() - armors.at(j).rect.size.area() > 100)
+          else if (armors.at(i).rect.size.area() - armors.at(j).rect.size.area() > 50/*100*/)
           {
-            is_armor[i] = false;
+            is_armor[j] = false;			//emmmmmmm
+						// ROS_ERROR("state 3");
           }
+					else if ( (std::max(armors.at(i).rect.size.width, armors.at(i).rect.size.height) + \
+										 std::max(armors.at(j).rect.size.width, armors.at(j).rect.size.height)) > dis )	//add by hyy
+					{
+						if ( armor_ratio1 < armor_ratio2 || std::abs(armors.at(j).rect.angle) < std::abs(armors.at(i).rect.angle) )
+						{
+							is_armor[j] = false;
+							// ROS_ERROR("state 4");
+						}
+						else
+						{
+							is_armor[i] = false;
+							// ROS_ERROR("state 5");
+						}
+						
+						
+					}
           /*else{
             float val_i = get_armor_roi(armors[i].rect);
             float val_j = get_armor_roi(armors[j].rect);
@@ -923,30 +941,22 @@ void ConstraintSet::FilterArmors(std::vector<ArmorInfo> &armors, roborts_msgs::I
 	
 	if(filter_rects.size())
 	{
-		kalman_node Kl;		//move to armor_detection_node.h
+		
 		Kl.kalman_pitch_angle	= pass_car_info.pitch_angle;
 		Kl.kalman_pitch_rate	= pass_car_info.pitch_rate;
 		Kl.kalman_yaw_angle		= pass_car_info.yaw_angle;
 		Kl.kalman_yaw_rate 		= pass_car_info.yaw_rate;
-		ROS_ERROR("Kl: pass_pitch_angle: %f", Kl.kalman_pitch_angle);
-    ROS_ERROR("Kl: pass_yaw_angle:   %f", Kl.kalman_yaw_angle);
-    ROS_ERROR("Kl: pass_pitch_rate:  %f", Kl.kalman_pitch_rate);
-    ROS_ERROR("Kl: pass_yaw_rate:    %f", Kl.kalman_yaw_rate);
+		// ROS_ERROR("Kl: pass_pitch_angle: %f", Kl.kalman_pitch_angle);
+    // ROS_ERROR("Kl: pass_yaw_angle:   %f", Kl.kalman_yaw_angle);
+    // ROS_ERROR("Kl: pass_pitch_rate:  %f", Kl.kalman_pitch_rate);
+    // ROS_ERROR("Kl: pass_yaw_rate:    %f", Kl.kalman_yaw_rate);
     
-		//waitKey(0);
 		showup_cnt++;
-		if (showup_cnt > 3) { 	//useless?
-			// cv::RotatedRect preArmor = CKalman(filter_rects[0].rect);
-			cv::RotatedRect preArmor = Kl.KF(filter_rects[0].rect);
-
-			// cv::RotatedRect preArmor = test_Kl.KF(filter_rects[0].rect);		
-			// cv::RotatedRect preArmor = Kl->KF(filter_rects[0].rect);
-			// Kl->KF(filter_rects[0].rect);
-			// kalman_node preKl;
-			// preKl.KF(filter_rects[0].rect);
-			circle(src_img_,preArmor.center,10,cv::Scalar(0,0,255),-1);
-			cv::line(src_img_,preArmor.center,filter_rects[0].rect.center,cv::Scalar(0,0,255),2);
-			filter_rects[0].rect = preArmor;
+		if (showup_cnt > 3) { 	
+		cv::RotatedRect preArmor = Kl.KF(filter_rects[0].rect);
+		circle(src_img_,preArmor.center,10,cv::Scalar(0,0,255),-1);
+		cv::line(src_img_,preArmor.center,filter_rects[0].rect.center,cv::Scalar(0,0,255),2);
+		filter_rects[0].rect = preArmor;
 		}
 	}
 	else

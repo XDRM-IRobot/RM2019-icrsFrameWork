@@ -41,11 +41,6 @@
 #include "armor_detection_algorithms.h"
 
 #include "kalman_node/kalman_node.h"
-// #include "../../serial/include/car_info.h"
-#include "../../serial/include/car_info.h"
-
-// extern kalman_node *Kl = new kalman_node; // to pass gimbal data to kalman .... zan shi xie bu chu geng hao de 
-
 
 
 namespace roborts_detection {
